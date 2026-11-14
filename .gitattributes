@@ -1,0 +1,9 @@
+# 텍스트 파일 줄바꿈 통일
+* text=auto eol=lf
+
+*.png binary
+*.wav binary
+*.ogg binary
+*.mp3 binary
+*.ttf binary
+*.otf binary

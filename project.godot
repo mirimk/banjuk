@@ -1,0 +1,34 @@
+; Engine configuration file.
+; Godot 4 프로젝트 설정 파일입니다. 에디터에서 열면 자동으로 갱신될 수 있습니다.
+
+config_version=5
+
+[application]
+
+config/name="반죽 (Banjuk)"
+config/description="빵을 만들수록 자신을 잃어가는 제빵사의 이야기 - 프로토타입"
+run/main_scene="res://scenes/main/title.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[autoload]
+
+GameState="*res://scripts/systems/game_state.gd"
+
+[display]
+
+window/size/viewport_width=640
+window/size/viewport_height=360
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+
+[gui]
+
+theme/custom_font="res://assets/ui/default_font.tres"
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
