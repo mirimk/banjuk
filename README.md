@@ -1,11 +1,11 @@
 # 반죽 (Banjuk)
 
 > 빵을 만들수록 자신을 잃어가는 제빵사의 이야기
-> 경영 시뮬레이션 + 스토리 어드벤처 + 심리 호러 · Godot 4 · 2D 픽셀아트 (현재 임시 도형 그래픽)
+> 경영 시뮬레이션 + 스토리 어드벤처 + 심리 호러 · Godot 4.7 · 2D 픽셀아트 (현재 임시 도형 그래픽)
 
 ## 실행 방법
 
-1. [Godot 4.3 이상](https://godotengine.org/download) 설치
+1. [Godot 4.7 이상](https://godotengine.org/download) 설치 (4.7.2 에서 테스트)
 2. Godot 프로젝트 매니저에서 **가져오기 → 이 폴더의 `project.godot`** 선택
 3. `F5` (메인 씬: 타이틀 화면)
 
