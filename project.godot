@@ -6,12 +6,14 @@ config_version=5
 [application]
 
 config/name="반죽 (Banjuk)"
+config/version="0.2"
 config/description="빵을 만들수록 자신을 잃어가는 제빵사의 이야기 - 프로토타입"
 run/main_scene="res://scenes/main/title.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 
 [autoload]
 
+Sound="*res://scripts/systems/sound.gd"
 GameState="*res://scripts/systems/game_state.gd"
 
 [display]
@@ -22,6 +24,10 @@ window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="keep"
+
+[input_devices]
+
+pointing/emulate_mouse_from_touch=true
 
 [gui]
 

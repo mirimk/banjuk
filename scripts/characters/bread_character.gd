@@ -8,6 +8,8 @@ const UIUtil = preload("res://scripts/systems/ui_util.gd")
 @export var kind: String = "banjuk"
 var walking := false
 var stain := 0.0  # 손에 묻은 반죽 0~1
+## 반죽 손상 0~100: 높을수록 몸이 반죽처럼 허옇게 질척해지고 손에 반죽이 들러붙는다
+var damage := 0.0
 
 var _t := 0.0
 
@@ -35,8 +37,11 @@ func _draw() -> void:
 
 
 func _draw_banjuk(bob: float) -> void:
-	var crust := Color(0.80, 0.52, 0.26)
-	var bun := Color(0.95, 0.77, 0.48)
+	var t := clampf(damage / 100.0, 0.0, 1.0)
+	var dough_col := Color(0.93, 0.90, 0.82)
+	var crust := Color(0.80, 0.52, 0.26).lerp(dough_col.darkened(0.1), t * 0.7)
+	var bun := Color(0.95, 0.77, 0.48).lerp(dough_col, t * 0.8)
+	var st := maxf(stain, t)
 	var o := Vector2(0, bob)
 	# 발
 	draw_rect(Rect2(Vector2(-8, -3) + o, Vector2(5, 3)), Color(0.45, 0.28, 0.15))
@@ -48,10 +53,13 @@ func _draw_banjuk(bob: float) -> void:
 	UIUtil.ellipse(self, Vector2(-15, -10) + o, Vector2(3.5, 3.5), bun)
 	UIUtil.ellipse(self, Vector2(15, -10) + o, Vector2(3.5, 3.5), bun)
 	# 손에 붙은 반죽
-	if stain > 0.0:
+	if st > 0.05:
 		var dough := Color(0.88, 0.85, 0.76)
-		UIUtil.ellipse(self, Vector2(16, -9) + o, Vector2(2.5 + stain * 2.0, 2.0 + stain * 2.5), dough)
-		draw_line(Vector2(16, -7) + o, Vector2(16.5, -4 + stain * 3.0) + o, dough, 1.5)
+		UIUtil.ellipse(self, Vector2(16, -9) + o, Vector2(2.5 + st * 2.0, 2.0 + st * 2.5), dough)
+		draw_line(Vector2(16, -7) + o, Vector2(16.5, -4 + st * 3.0) + o, dough, 1.5)
+		if st > 0.5:
+			UIUtil.ellipse(self, Vector2(-16, -9) + o, Vector2(1.5 + st * 1.5, 1.5 + st * 2.0), dough)
+			draw_line(Vector2(-16, -7) + o, Vector2(-16.5, -5 + st * 2.0) + o, dough, 1.2)
 	# 얼굴
 	draw_circle(Vector2(-5, -13) + o, 1.6, Color(0.15, 0.08, 0.05))
 	draw_circle(Vector2(5, -13) + o, 1.6, Color(0.15, 0.08, 0.05))

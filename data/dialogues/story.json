@@ -1,0 +1,65 @@
+{
+	"_설명": "speaker: boss(사장) / crew(크루) / me(반죽이) / narr(내레이션). cond: dmgHi(반죽 손상 30 이상) / dmgLo / secret1(1일차에 비밀 손님을 만남). choices: [{t: 버튼 글자, go: 이어지는 대사 키, set: 플래그, aff: {호감도}}]",
+
+	"morning1": [
+		{"speaker": "narr", "text": "새벽 5시. 작은 동네의 오래된 발효빵 전문점에 불이 켜진다."},
+		{"speaker": "me", "text": "드디어 진짜 빵집에서 일하는 첫날이야! 언젠가 나만의 빵을 만들 거야."},
+		{"speaker": "boss", "text": "오, 왔구먼! 우리 빵집에 온 걸 환영하네. 08시 오픈 전까지 빵을 최대한 만들어 두게."},
+		{"speaker": "boss", "text": "반죽대에서 반죽 → 발효실 → 오븐 → 식힘대. 다 식은 빵은 눌러서 진열대로 옮기면 되네."},
+		{"speaker": "crew", "text": "…난 크루. 3년 차. 발효는 초록 구간, 굽기는 황금빛일 때 꺼내. 오래 두면 타."},
+		{"speaker": "crew", "text": "그리고 하나만. 너무 열심히 하지 마."}
+	],
+	"morning2": [
+		{"speaker": "narr", "text": "2일차 새벽 5시. 어제보다 오븐이 조금 더 따뜻하게 느껴진다."},
+		{"speaker": "boss", "text": "잘 잤나? 오늘은 손님이 더 많을 걸세. 어제 자네 빵이 동네에 소문이 났거든."},
+		{"speaker": "me", "cond": "dmgHi", "text": "(손끝에 어제 반죽이 아직 붙어 있다. 밤새 씻어도 떨어지지 않았다.)"},
+		{"speaker": "me", "cond": "dmgLo", "text": "(몸이 말랑하다. 오늘도 할 수 있을 것 같아.)"},
+		{"speaker": "crew", "text": "…손 좀 보여줘 봐. 아니, 됐어."}
+	],
+	"break1": [
+		{"speaker": "narr", "text": "11:00. 오전 영업이 끝나고, 주방에 잠깐의 쉬는 시간이 찾아왔다."},
+		{"speaker": "boss", "text": "허허, 첫 오전 영업치고 훌륭하구먼. 자네는 참 성실해."},
+		{"speaker": "crew", "text": "…점심 먹어. 반죽은 기다려 주니까."},
+		{"speaker": "me", "text": "(나는 왜 이렇게 빵이 좋을까. 처음 맡았던 버터 냄새만큼은 또렷하게 기억난다.)"},
+		{"speaker": "boss", "text": "반죽이, 우리 가게 발효종 얘기는 들었나? 정성을 들인 만큼… 꼭 보답을 하지.", "choices": [
+			{"t": "어떤 보답이요?", "go": "b1a", "set": "asked_reward"},
+			{"t": "열심히 할게요!", "go": "b1b", "aff": {"boss": 1}}
+		]},
+		{"speaker": "crew", "text": "참, 요즘 가끔 오는 검은 외투 손님 봤어? 빵은 안 보고 너만 보고 가던데."},
+		{"speaker": "boss", "text": "…쓸데없는 소리. 13시네. 오후 반죽 시작하지."}
+	],
+	"b1a": [
+		{"speaker": "boss", "text": "맛이지, 맛. 허허. 자네가 내어준 만큼 빵이 맛있어진다네."},
+		{"speaker": "me", "text": "(내어준 만큼…?)"}
+	],
+	"b1b": [
+		{"speaker": "boss", "text": "그래, 그 마음이면 충분하네. 조금만 더 힘내 주게."},
+		{"speaker": "crew", "text": "(크루가 작게 한숨을 쉰다.)"}
+	],
+	"break2": [
+		{"speaker": "narr", "text": "2일차 11:00. 오늘따라 주방이 유난히 덥다."},
+		{"speaker": "crew", "cond": "dmgHi", "text": "너, 손에 그거… 반죽 아직 붙어 있네. 씻어도 안 떨어지지?"},
+		{"speaker": "crew", "cond": "dmgLo", "text": "오늘은 좀 괜찮아 보이네. …다행이다."},
+		{"speaker": "me", "text": "(만져보니 손끝이 반죽처럼 말랑하고 끈적하다. 어제는 이렇지 않았는데.)"},
+		{"speaker": "crew", "text": "너무 열심히 하지 마. 여기선 다 이렇게 돼."},
+		{"speaker": "boss", "text": "크루."},
+		{"speaker": "crew", "text": "…농담이에요. 신입 겁주는 거."},
+		{"speaker": "crew", "cond": "secret1", "text": "그러고 보니 어제 그 검은 외투 손님, 너한테 뭐라고 했어?"},
+		{"speaker": "me", "cond": "secret1", "text": "(\"아직은 좋은 반죽\"이라고 했다. 그 말이 하루 종일 머릿속에서 부풀어 올랐다.)"},
+		{"speaker": "boss", "text": "반죽이, 오늘은 조금만 더 힘을 내 주겠나? 좋은 빵은… 조금 더 내어줄 때 나오는 법이지.", "choices": [
+			{"t": "제가 뭘 더 내어줘야 하는데요?", "go": "b2a", "set": "asked"},
+			{"t": "네, 더 열심히 할게요.", "go": "b2b", "aff": {"boss": 1}}
+		]},
+		{"speaker": "boss", "text": "자, 오후 장사도 힘내 보세!"},
+		{"speaker": "narr", "text": "13:00. 오븐에 다시 불이 들어온다."}
+	],
+	"b2a": [
+		{"speaker": "boss", "text": "허허, 정성 말일세, 정성."},
+		{"speaker": "narr", "text": "사장님의 웃는 눈이 오늘따라 가늘다."},
+		{"speaker": "me", "text": "(정성… 정말 그것뿐일까?)"}
+	],
+	"b2b": [
+		{"speaker": "boss", "text": "그래, 역시 자네야."},
+		{"speaker": "crew", "text": "……"}
+	]
+}
