@@ -1,0 +1,4 @@
+Noto Sans CJK KR (subset: ASCII, Hangul syllables, common symbols)
+Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.
+Licensed under the SIL Open Font License, Version 1.1 — https://openfontlicense.org
+Used as a fallback font so Korean text renders in the web build (no system fonts in browsers).

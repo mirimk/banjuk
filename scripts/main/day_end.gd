@@ -43,13 +43,13 @@ func _build_settle() -> void:
 	var t: Dictionary = S.today
 	var panel := PanelContainer.new()
 	var sb := UIUtil.panel_style(Color(1.0, 0.99, 0.97), Color(0.8, 0.75, 0.68), 1)
-	sb.set_content_margin_all(16)
+	sb.set_content_margin_all(12)
 	panel.add_theme_stylebox_override("panel", sb)
-	panel.position = Vector2(200, 44)
-	panel.custom_minimum_size = Vector2(240, 0)
+	panel.position = Vector2(190, 38)
+	panel.custom_minimum_size = Vector2(260, 0)
 	_content.add_child(panel)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 3)
+	box.add_theme_constant_override("separation", 1)
 	panel.add_child(box)
 	var ink := Color(0.23, 0.16, 0.10)
 	var title := UIUtil.label("%d일차 정산" % int(S.day), 18, ink)
@@ -58,21 +58,37 @@ func _build_settle() -> void:
 	var sub := UIUtil.label("빵집 「반죽」 · 18:00 퇴근", 9, Color(0.54, 0.49, 0.42))
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(sub)
-	_row(box, "만든 빵", "%d개" % int(t.made))
-	_row(box, "판매한 빵", "%d개" % int(t.sold))
+	_row(box, "만든 빵 · 판매한 빵", "%d개 · %d개" % [int(t.made), int(t.sold)])
 	_row(box, "그냥 돌아간 손님", "%d명" % int(t.missed))
+	_row(box, "잘못 건넨 빵", "%d번" % int(t.wrong))
 	_row(box, "버려진 반죽 · 남은 빵", "%d개 · %d개" % [int(t.lost), int(t.discarded)])
-	_row(box, "팁", D.fmt_money(float(t.tips)))
+	if int(S.day) >= D.DELIVERY_START:
+		_row(box, "배달 완료 · 취소", "%d건 · %d건" % [int(t.deliv), int(t.deliv_fail)])
+		_row(box, "  배달 수입 (수수료 차감 후)", D.fmt_money(float(t.deliv_rev)))
+		_row(box, "  배달 수수료", "-" + D.fmt_money(float(t.deliv_fee)))
+	_row(box, "팁 (빨리 건넨 손님 %d명)" % int(t.get("fast_tips", 0)), D.fmt_money(float(t.tips)))
 	box.add_child(HSeparator.new())
-	_row(box, "오늘 매출", D.fmt_money(float(t.revenue)), 14)
+	_row(box, "오늘 매출", D.fmt_money(float(t.revenue)))
+	if int(t.eaten) > 0:
+		_row(box, "먹은 빵 %d개 (일급에서 차감)" % int(t.eaten), "-" + D.fmt_money(float(t.eat_cost)))
+	if int(t.get("soldout", 0)) > 0:
+		_row(box, "품절 패널티 %d명 (일급에서 차감)" % int(t.soldout), "-" + D.fmt_money(float(t.soldout_cost)))
+	if int(t.get("late", 0)) > 0:
+		_row(box, "늦어서 떠난 손님 %d명 (일급에서 차감)" % int(t.late), "-" + D.fmt_money(float(t.late_cost)))
+	_row(box, "오늘 일급", D.fmt_money(float(int(t.revenue) - int(t.eat_cost) - int(t.get("soldout_cost", 0)) - int(t.get("late_cost", 0)))), 14)
 	_row(box, "현재 소지금", D.fmt_money(float(S.money)))
+	if S.flags.get("levain_door", false) and int(S.day) == 2:
+		var note := UIUtil.label("퇴근길, 가게 문 앞에 작은 유리병이 놓여 있었다.
+「르방(발효종)」을 얻었다.", 9, Color(0.42, 0.30, 0.55))
+		note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		box.add_child(note)
 	var btn := UIUtil.button("집으로", 13)
 	btn.pressed.connect(_go_home)
 	box.add_child(btn)
 	btn.grab_focus()
 
 
-func _row(box: VBoxContainer, k: String, v: String, size: int = 11) -> void:
+func _row(box: VBoxContainer, k: String, v: String, size: int = 10) -> void:
 	var row := HBoxContainer.new()
 	var a := UIUtil.label(k, size, Color(0.23, 0.16, 0.10))
 	a.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -116,7 +132,7 @@ func _build_home() -> void:
 		for r in D.REWARDS:
 			var b := UIUtil.button("%s\n%s\n\n%s" % [r.name, "무료" if int(r.cost) == 0 else D.fmt_money(float(r.cost)), r.desc], 10)
 			b.custom_minimum_size = Vector2(110, 96)
-			b.disabled = int(S.money) < int(r.cost)
+			b.disabled = int(r.cost) > 0 and int(S.money) < int(r.cost)   # 무료 보상은 빚이 있어도 고를 수 있다
 			b.pressed.connect(_take_reward.bind(r.id))
 			row.add_child(b)
 	else:
@@ -147,7 +163,7 @@ func _reward(id: String) -> Dictionary:
 
 func _take_reward(id: String) -> void:
 	var r := _reward(id)
-	if int(S.money) < int(r.cost):
+	if int(r.cost) > 0 and int(S.money) < int(r.cost):
 		GameState.toast("돈이 부족해요")
 		Sound.sfx("bad")
 		return

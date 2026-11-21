@@ -4,42 +4,129 @@ extends RefCounted
 const UIUtil = preload("res://scripts/systems/ui_util.gd")
 
 const BREAD_COLORS := {
-	"toast": Color(0.86, 0.60, 0.30),
-	"croissant": Color(0.88, 0.60, 0.25),
+	"cream": Color(0.92, 0.70, 0.38),
+	"redbean": Color(0.62, 0.36, 0.18),
+	"choco": Color(0.86, 0.60, 0.30),
+	"soboro": Color(0.88, 0.64, 0.32),
+	"sausage": Color(0.88, 0.62, 0.32),
+	"croquette": Color(0.76, 0.48, 0.20),
+	"sandwich": Color(0.95, 0.84, 0.62),
+	"ciabatta": Color(0.86, 0.70, 0.48),
 	"baguette": Color(0.83, 0.59, 0.31),
-	"bagel": Color(0.78, 0.52, 0.26),
+	"wholewheat": Color(0.55, 0.36, 0.20),
 }
 
 
-## 빵 하나. col 을 주면 그 색으로(오븐 굽기 색), alpha 로 투명도.
+## 빵 하나. col 을 주면 그 색으로(오븐 굽기 색), alpha 로 투명도. 크기는 대략 가로 30 · 세로 16 (sc=1)
 static func bread(ci: CanvasItem, type: String, center: Vector2, sc: float = 1.0, col: Color = Color(0, 0, 0, 0), alpha: float = 1.0) -> void:
-	var c: Color = col if col.a > 0.0 else BREAD_COLORS.get(type, Color(0.85, 0.6, 0.3))
+	var baked := col.a <= 0.0
+	var c: Color = col if not baked else BREAD_COLORS.get(type, Color(0.85, 0.6, 0.3))
 	c.a = alpha
 	var dark := c.darkened(0.25)
 	var light := c.lightened(0.35)
+	var white := Color(1.0, 0.98, 0.94, alpha)
 	ci.draw_set_transform(center, 0.0, Vector2(sc, sc))
 	match type:
-		"toast":
-			ci.draw_rect(Rect2(-9, -5, 18, 10), c)
-			UIUtil.ellipse(ci, Vector2(0, -5), Vector2(9.5, 5), c)
-			UIUtil.ellipse(ci, Vector2(0, -6), Vector2(6.5, 2.5), light)
-			ci.draw_rect(Rect2(-9, 3, 18, 2), dark)
-		"croissant":
-			var xs := [-10.0, -5.0, 0.0, 5.0, 10.0]
-			for i in xs.size():
-				var x: float = xs[i]
-				var t := absf(x) / 10.0
-				UIUtil.ellipse(ci, Vector2(x, t * t * 5.0 - 1.0), Vector2(4.4 - t * 1.4, 6.0 - t * 2.5), c if i % 2 == 0 else dark.lerp(c, 0.5))
+		"cream":
+			# 반달 모양 + 가운데 크림
+			ci.draw_colored_polygon(_half_disc(Vector2(0, 3), Vector2(12, 9)), c)
+			ci.draw_rect(Rect2(-12, 3, 24, 2), dark)
+			UIUtil.ellipse(ci, Vector2(0, -2), Vector2(7, 2.2), light)
+			if baked:
+				ci.draw_line(Vector2(-9, 3), Vector2(9, 3), Color(1.0, 0.95, 0.70, alpha), 2.0)
+		"redbean":
+			UIUtil.ellipse(ci, Vector2(0, 0), Vector2(10, 7), c)
+			UIUtil.ellipse(ci, Vector2(-2, -3), Vector2(5, 2), light)
+			ci.draw_circle(Vector2(0, -1), 1.6, Color(0.25, 0.12, 0.08, alpha))
+			for d in [Vector2(-4, -2), Vector2(3, -3), Vector2(5, 0), Vector2(-5, 1)]:
+				ci.draw_circle(d, 0.6, Color(0.95, 0.92, 0.85, alpha))
+		"choco":
+			# 소라 모양 콘 + 입구의 초코
+			ci.draw_colored_polygon(PackedVector2Array([Vector2(-13, 0), Vector2(8, -7), Vector2(8, 7)]), c)
+			for k in 4:
+				var x := -9.0 + k * 4.5
+				ci.draw_line(Vector2(x, -1.0 - k * 1.3), Vector2(x + 2.5, 1.0 + k * 1.5), dark, 1.2)
+			UIUtil.ellipse(ci, Vector2(8, 0), Vector2(3, 7), dark)
+			UIUtil.ellipse(ci, Vector2(8.5, 0), Vector2(2.2, 5.5), Color(0.30, 0.16, 0.08, alpha))
+		"soboro":
+			UIUtil.ellipse(ci, Vector2(0, 1), Vector2(11, 7), dark)
+			var bumps := [Vector2(-7, -1), Vector2(-3, -4), Vector2(2, -4), Vector2(6, -2), Vector2(-5, 2), Vector2(0, 0), Vector2(5, 2), Vector2(8, 1), Vector2(-8, 3), Vector2(2, 4)]
+			for i in bumps.size():
+				ci.draw_circle(bumps[i], 2.2, light if i % 2 == 0 else c.lightened(0.15))
+		"sausage":
+			UIUtil.ellipse(ci, Vector2(0, 0), Vector2(14, 6), c)
+			if baked:
+				for k in 4:
+					UIUtil.ellipse(ci, Vector2(-9 + k * 6, -1 + (k % 2) * 1.5), Vector2(2.6, 2.0), Color(0.80, 0.35, 0.28, alpha))
+				var z := PackedVector2Array()
+				for k in 9:
+					z.append(Vector2(-11 + k * 2.75, -2.5 + (k % 2) * 2.5))
+				ci.draw_polyline(z, Color(0.95, 0.80, 0.20, alpha), 0.9)
+			else:
+				for k in 4:
+					ci.draw_line(Vector2(-9 + k * 6, -4), Vector2(-7 + k * 6, 3), dark, 1.2)
+		"croquette":
+			UIUtil.ellipse(ci, Vector2(0, 0), Vector2(12, 7), c)
+			for d in [Vector2(-7, -2), Vector2(-3, -4), Vector2(1, -2), Vector2(5, -4), Vector2(8, 0), Vector2(-5, 2), Vector2(0, 3), Vector2(4, 2), Vector2(-9, 1)]:
+				ci.draw_rect(Rect2(d, Vector2(1.6, 1.4)), light)
+			for d in [Vector2(-5, -1), Vector2(3, 0), Vector2(-1, -4), Vector2(7, 3)]:
+				ci.draw_rect(Rect2(d, Vector2(1.4, 1.2)), dark)
+		"sandwich":
+			# 삼각 샌드위치: 빵 - 상추 - 햄 - 치즈 - 빵
+			var tri := func(off: float, w: float, h: float) -> PackedVector2Array:
+				return PackedVector2Array([Vector2(-w, off), Vector2(w, off), Vector2(0, off - h)])
+			if baked:
+				ci.draw_colored_polygon(tri.call(6.0, 12.0, 13.0), Color(0.80, 0.62, 0.38, alpha))
+				ci.draw_colored_polygon(tri.call(4.5, 12.5, 12.0), Color(0.40, 0.70, 0.30, alpha))
+				ci.draw_colored_polygon(tri.call(3.0, 12.0, 11.0), Color(0.92, 0.55, 0.55, alpha))
+				ci.draw_colored_polygon(tri.call(1.5, 11.5, 10.0), Color(0.98, 0.82, 0.30, alpha))
+				ci.draw_colored_polygon(tri.call(0.0, 11.0, 10.0), c)
+				ci.draw_colored_polygon(tri.call(-1.0, 9.5, 8.0), white.lerp(c, 0.4))
+			else:
+				ci.draw_rect(Rect2(-11, -6, 22, 12), c)
+				ci.draw_rect(Rect2(-11, -6, 22, 2), dark)
+		"ciabatta":
+			ci.draw_colored_polygon(PackedVector2Array([Vector2(-13, 4), Vector2(-12, -3), Vector2(-6, -6), Vector2(6, -5), Vector2(13, -2), Vector2(12, 5), Vector2(0, 6)]), c)
+			ci.draw_line(Vector2(-12, 4.5), Vector2(12, 5), dark, 1.5)
+			for d in [Vector2(-8, -3), Vector2(-3, -1), Vector2(2, -4), Vector2(7, -1), Vector2(-5, 2), Vector2(4, 2), Vector2(9, 2), Vector2(0, 0)]:
+				ci.draw_circle(d, 0.9, Color(1, 1, 1, 0.75 * alpha))
 		"baguette":
 			ci.draw_set_transform(center, -0.25, Vector2(sc, sc))
 			UIUtil.ellipse(ci, Vector2.ZERO, Vector2(15, 4.5), c)
 			for k in 3:
 				var x := -7.0 + k * 7.0
 				ci.draw_line(Vector2(x - 2, -2), Vector2(x + 2, 1), light, 1.2)
-		"bagel":
-			ci.draw_arc(Vector2.ZERO, 5.5, 0.0, TAU, 24, c, 5.0)
-			ci.draw_arc(Vector2(0, -0.5), 5.5, PI * 1.15, PI * 1.85, 10, light, 1.2)
+		"wholewheat":
+			UIUtil.ellipse(ci, Vector2(0, 0), Vector2(10, 8), c)
+			ci.draw_line(Vector2(-5, -4), Vector2(5, 3), light, 1.6)
+			ci.draw_line(Vector2(5, -4), Vector2(-5, 3), light, 1.6)
+			for d in [Vector2(-7, 0), Vector2(6, 1), Vector2(0, -6), Vector2(-2, 5), Vector2(3, -2), Vector2(-4, -3)]:
+				ci.draw_rect(Rect2(d, Vector2(1.2, 0.8)), Color(0.85, 0.72, 0.50, alpha))
+		_:
+			UIUtil.ellipse(ci, Vector2.ZERO, Vector2(10, 6), c)
 	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+## 반죽 덩어리 (아직 굽기 전). shaped 면 빵 모양을 따라간다.
+static func dough(ci: CanvasItem, type: String, center: Vector2, sc: float, rise: float, shaped: bool) -> void:
+	var col := Color(0.97, 0.91, 0.81)
+	if type == "wholewheat":
+		col = Color(0.84, 0.72, 0.56)
+	if shaped:
+		bread(ci, type, center, sc * (0.85 + rise * 0.2), col)
+		return
+	var sz := 0.8 + minf(rise, 1.1) * 0.6
+	var flat := rise > 1.25
+	UIUtil.ellipse(ci, center, Vector2(11.0 * sz * sc, 7.0 * sz * sc * (0.6 if flat else 1.0)), col)
+	UIUtil.ellipse(ci, center + Vector2(-3, -3) * sc, Vector2(4.0 * sz * sc, 1.8 * sz * sc), Color(1, 1, 1, 0.5))
+
+
+static func _half_disc(center: Vector2, r: Vector2) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for i in 13:
+		var a := PI + PI * float(i) / 12.0
+		pts.append(center + Vector2(cos(a) * r.x, sin(a) * r.y))
+	return pts
 
 
 ## 손님 한 명. feet = 발밑 중앙. p = GameData.PROFILES 의 항목.
@@ -117,6 +204,9 @@ static func person(ci: CanvasItem, feet: Vector2, p: Dictionary, sc: float = 1.0
 	elif acc == "cap":
 		UIUtil.ellipse(ci, head + Vector2(0, -4.0), Vector2(6.3, 3.2), Color(0.25, 0.35, 0.65, alpha))
 		ci.draw_rect(Rect2(0, head.y - 4.2, 8, 1.6), Color(0.2, 0.28, 0.55, alpha))
+	elif acc == "helmet":
+		UIUtil.ellipse(ci, head + Vector2(0, -2.5), Vector2(7.4, 5.6), Color(0.95, 0.35, 0.25, alpha))
+		ci.draw_rect(Rect2(-6.5, head.y - 1.0, 13, 2.2), Color(0.25, 0.30, 0.40, alpha))
 	elif acc == "hat":
 		ci.draw_rect(Rect2(-8.5, head.y - 4.5, 17, 1.8), Color(0.85, 0.75, 0.50, alpha))
 		ci.draw_rect(Rect2(-5, head.y - 9, 10, 4.8), Color(0.85, 0.75, 0.50, alpha))
