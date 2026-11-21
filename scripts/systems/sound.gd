@@ -179,6 +179,11 @@ func _load_settings() -> void:
 		muted = bool(d.get("muted", false))
 
 
+## 설정(음량·음소거)을 지금 저장한다. 게임 종료 직전에 호출.
+func save_now() -> void:
+	_save_settings()
+
+
 func _save_settings() -> void:
 	var f := FileAccess.open(SETTINGS_PATH, FileAccess.WRITE)
 	if f != null:

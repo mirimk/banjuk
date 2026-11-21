@@ -11,25 +11,73 @@ const PROOF_MAX := 1.4
 const BAKE_MAX := 1.45
 const PROOF_BAND := Vector2(0.75, 0.95)   # 발효 최적 구간
 const BAKE_BAND := Vector2(0.85, 1.05)    # 굽기 최적 구간
-const SHELF_MAX := 15
-const BATCH := 2              # 반죽 1판 = 빵 2개
+const PROOF_SLOTS := 4
+const SHAPE_SLOTS := 2
+const OVEN_SLOTS := 3
+const RACK_SLOTS := 4
+const BATCH := 4              # 반죽 1판 = 빵 4개
 const START_MONEY := 5000
-const LAST_DAY := 2           # 현재 프로토타입의 마지막 날
+const LAST_DAY := 7
+const SKIP_Q := 20            # 공정을 건너뛰면 품질 상한 (= F 등급)
 
-const BREADS := {
-	"toast": {"name": "식빵", "price": 3000},
-	"croissant": {"name": "크루아상", "price": 3500},
-	"baguette": {"name": "바게트", "price": 4000},
-	"bagel": {"name": "베이글", "price": 2500},
+## 공정 이름
+const STEP_NAMES := {"knead": "반죽", "proof": "발효", "shape": "성형", "proof2": "2차 발효", "bake": "굽기", "cool": "식히기"}
+
+## 빵 단계: 해금 날짜, 공정, 소모 체력/반죽 손상, 먹었을 때 회복 체력
+const TIERS := {
+	1: {"name": "1단계", "unlock": 1, "steps": ["knead", "proof", "bake", "cool"],
+		"st_knead": 6, "dmg_knead": 1, "st_shape": 0, "dmg_shape": 0, "dmg_oven": 1},
+	2: {"name": "2단계", "unlock": 3, "steps": ["knead", "proof", "shape", "bake", "cool"],
+		"st_knead": 8, "dmg_knead": 1, "st_shape": 3, "dmg_shape": 1, "dmg_oven": 1},
+	3: {"name": "3단계", "unlock": 5, "steps": ["knead", "proof", "shape", "proof2", "bake", "cool"],
+		"st_knead": 10, "dmg_knead": 1, "st_shape": 4, "dmg_shape": 1, "dmg_oven": 2, "levain": true},
 }
-const BREAD_ORDER := ["toast", "croissant", "baguette", "bagel"]
+
+## knead: 반죽 미니게임 방식 (timing = 타이밍 누르기 / rub = 문질러 치대기)
+## shape: 성형 미니게임에서 따라 그릴 모양
+const BREADS := {
+	"cream": {"name": "크림빵", "tier": 1, "price": 2500, "knead": "timing"},
+	"redbean": {"name": "단팥빵", "tier": 1, "price": 2500, "knead": "rub"},
+	"choco": {"name": "초코소라빵", "tier": 1, "price": 2800, "knead": "timing"},
+	"soboro": {"name": "소보루빵", "tier": 1, "price": 2300, "knead": "rub"},
+	"sausage": {"name": "소시지빵", "tier": 2, "price": 3800, "knead": "timing", "shape": "zigzag"},
+	"croquette": {"name": "고로케", "tier": 2, "price": 3500, "knead": "rub", "shape": "oval"},
+	"sandwich": {"name": "샌드위치", "tier": 2, "price": 4500, "knead": "timing", "shape": "square"},
+	"ciabatta": {"name": "치아바타", "tier": 3, "price": 5000, "knead": "rub", "shape": "fold"},
+	"baguette": {"name": "바게트", "tier": 3, "price": 5500, "knead": "timing", "shape": "slash"},
+	"wholewheat": {"name": "통밀빵", "tier": 3, "price": 6000, "knead": "rub", "shape": "circle"},
+}
+const BREAD_ORDER := ["cream", "redbean", "choco", "soboro", "sausage", "croquette", "sandwich", "ciabatta", "baguette", "wholewheat"]
+
+## 진열대에서 먹을 빵이 없을 때 사 먹는 가게 재고 빵
+const STAFF_BREAD := {"name": "사장님 빵 (가게 재고)", "price": 3000}
+const EAT_WON_PER_ST := 125.0   # 빵값 125원당 체력 +1 (비싼 빵일수록 많이 회복)
+const EAT_ST_RANGE := Vector2i(10, 60)
+
+# ---------------------------------------------------------------- 손님 / 배달
+## 빨리 건네면 팁: 손님 대기 게이지가 이만큼 이상 남아 있으면 빵값의 일정 비율을 팁으로
+const FAST_TIPS := [
+	{"pat": 0.8, "rate": 0.3, "msg": "와, 엄청 빠르네요! 팁이에요."},
+	{"pat": 0.6, "rate": 0.15, "msg": "빨리 주셔서 고마워요. 팁이에요."},
+]
+const SOLD_OUT_PENALTY := 5000   # 손님이 찾는 빵이 진열대에 없어서 그냥 돌아가면 일당에서 차감
+const LATE_PENALTY := 3000       # 빵은 있었는데 늦게 줘서 손님이 기다리다 떠나면 일당에서 차감
+const MOOD_GOOD := 50.0          # 기분이 이보다 낮으면 미니게임 판정이 좁아지고 손님이 덜 온다
+const MOOD_BAD := 30.0           # 이보다 낮으면 더 심하게
+const MOOD_ENDING := 40.0        # '나만의 빵' 엔딩에 필요한 7일 평균 기분
+const WRONG_PAT := 0.3        # 빵을 잘못 주면 손님 인내심 -30%
+const WRONG_MOOD := 3         # 기분 -3
+const WRONG_LIMIT := 3        # 같은 손님에게 3번 틀리면 화내고 나감
+const DELIVERY_START := 3     # 배달 주문이 시작되는 날
+const DELIVERY_FEE := 0.3     # 배달 수수료 30%
+const DELIVERY_PAT := 45.0    # 배달 주문 대기 시간(초)
 
 const GRADES := [
-	{"g": "S", "min": 90, "m": 1.5, "color": Color(0.83, 0.63, 0.09)},
-	{"g": "A", "min": 75, "m": 1.2, "color": Color(0.31, 0.60, 0.36)},
+	{"g": "S", "min": 90, "m": 1.6, "color": Color(0.83, 0.63, 0.09)},
+	{"g": "A", "min": 75, "m": 1.3, "color": Color(0.31, 0.60, 0.36)},
 	{"g": "B", "min": 55, "m": 1.0, "color": Color(0.29, 0.50, 0.69)},
 	{"g": "C", "min": 30, "m": 0.7, "color": Color(0.54, 0.49, 0.42)},
-	{"g": "F", "min": 0, "m": 0.3, "color": Color(0.23, 0.23, 0.23)},
+	{"g": "F", "min": 0, "m": 0.4, "color": Color(0.23, 0.23, 0.23)},
 ]
 
 const PHASES := [
@@ -90,6 +138,15 @@ const FLAVOR := [
 		"자기 자신을 조금씩 팔아서 사는 건 다 똑같죠.",
 	],
 ]
+const SECRET_LINES := {
+	1: {"line": "……", "req": "아무 빵이나 하나. 당신이 만든 걸로."},
+	2: {"line": "또 보는군. 손이 벌써 말랑해지기 시작했어.", "req": "오늘도 아무 빵이나. 당신이 만든 걸로."},
+	3: {"line": "그 병, 잘 먹이고 있나? 하루 한 번, 밀가루와 물.", "req": "빵 하나. 오늘은 당신 걸로."},
+	4: {"line": "명부를 봤다면 알겠지. 여기선 다들 '조금만 더'를 듣는다.", "req": "아무 빵이나."},
+	5: {"line": "당신의 발효종으로 구운 빵 냄새가 나는군. 그건 당신 거야.", "req": "르방으로 구운 걸 보고 싶군."},
+	6: {"line": "이틀 남았어. 그 사람은 마지막 날에 부탁을 하지.", "req": "아무 빵이나 하나."},
+	7: {"line": "오늘이 마지막이야. 무엇을 남길지는 당신이 정해.", "req": "마지막 빵을 주시오."},
+}
 const THANKS := ["감사합니다!", "잘 먹을게요~", "내일 또 올게요.", "고마워요, 수고해요.", "냄새 좋다~"]
 const SAD := ["…그냥 갈게요.", "너무 오래 걸리네요.", "다음에 올게요."]
 
@@ -100,19 +157,95 @@ const STAFF_TALK := {
 
 # ---------------------------------------------------------------- 퇴근 후 보상 (임시)
 const REWARDS := [
-	{"id": "sleep", "name": "푹 자기", "cost": 0, "st": 35, "dmg": -100, "mood": 0,
-		"desc": "체력 +35\n반죽 손상 완전 복구",
-		"msg": "포근한 이불 속에서 손끝의 반죽이 천천히 떨어져 나갔다."},
+	{"id": "sleep", "name": "푹 자기", "cost": 0, "st": 35, "dmg": -40, "mood": 0,
+		"desc": "체력 +35\n반죽 손상 -40",
+		"msg": "포근한 이불 속에서 손끝의 반죽이 조금씩 떨어져 나갔다. 전부는 아니었다."},
 	{"id": "youtube", "name": "유튜브 보기", "cost": 0, "st": 45, "dmg": 0, "mood": 20,
 		"desc": "체력 +45 · 기분 +20\n(반죽 손상은 그대로)",
 		"msg": "\"빵 굽는 영상 몰아보기\"… 왠지 남 일 같지 않다. 새벽 2시에야 잠들었다."},
-	{"id": "chicken", "name": "치킨 시켜먹기", "cost": 15000, "st": 60, "dmg": -15, "mood": 30,
-		"desc": "체력 +60 · 기분 +30\n반죽 손상 -15",
+	{"id": "chicken", "name": "치킨 시켜먹기", "cost": 30000, "st": 60, "dmg": -20, "mood": 30,
+		"desc": "체력 +60 · 기분 +30\n반죽 손상 -20",
 		"msg": "바삭한 튀김옷… 문득 이것도 원래는 반죽이었다는 생각이 든다."},
-	{"id": "spa", "name": "반죽 보습 스파", "cost": 25000, "st": 70, "dmg": -100, "mood": 15,
-		"desc": "체력 +70 · 기분 +15\n반죽 손상 완전 복구",
-		"msg": "촉촉한 스팀 속에서 들러붙은 반죽이 스르르 녹아내렸다."},
+	{"id": "spa", "name": "반죽 보습 스파", "cost": 100000, "st": 70, "dmg": -60, "mood": 15,
+		"desc": "체력 +70 · 기분 +15\n반죽 손상 -60",
+		"msg": "촉촉한 스팀 속에서 들러붙은 반죽이 꽤 녹아내렸다. 하지만 손끝 한 마디는 끝내 말랑한 채였다."},
 ]
+
+
+static func tier_of(type: String) -> int:
+	return int(BREADS[type].tier)
+
+
+static func tier_unlocked(tier: int, day: int) -> bool:
+	return day >= int(TIERS[tier].unlock)
+
+
+## 오늘 만들 수 있는(해금된) 빵 종류. 3단계는 발효종이 있어야 만들 수 있지만 목록에는 들어간다.
+static func unlocked_breads(day: int) -> Array:
+	return BREAD_ORDER.filter(func(t: String) -> bool: return tier_unlocked(tier_of(t), day))
+
+
+static func max_tier(day: int) -> int:
+	var m := 1
+	for t in TIERS:
+		if tier_unlocked(t, day):
+			m = maxi(m, t)
+	return m
+
+
+## 손님 인내심 게이지 길이(초). 날이 갈수록 짧아진다.
+static func patience(day: int) -> float:
+	return maxf(9.0, 13.0 - (day - 1) * 0.6)
+
+
+static func spawn_interval(day: int) -> Vector2:
+	return Vector2(maxf(2.0, 3.5 - day * 0.2), maxf(3.5, 5.5 - day * 0.3))
+
+
+## 영업 시간대 하나당 배달 주문 수
+static func deliveries_per_phase(day: int) -> int:
+	if day < DELIVERY_START:
+		return 0
+	return 1 if day <= 4 else (2 if day <= 6 else 3)
+
+
+## 빵을 먹었을 때 오르는 체력: 빵값에 비례 (등급이 높고 비싼 빵일수록 많이)
+static func eat_stamina(cost: int) -> int:
+	return clampi(int(round(cost / EAT_WON_PER_ST)), EAT_ST_RANGE.x, EAT_ST_RANGE.y)
+
+
+## 빨리 건넸을 때의 팁 (게이지 남은 비율 pat 기준). 없으면 {}.
+static func fast_tip(pat: float) -> Dictionary:
+	for t in FAST_TIPS:
+		if pat >= float(t.pat):
+			return t
+	return {}
+
+
+## "S ×1.6 · A ×1.3 · …" 등급별 가격 배율 안내
+static func grade_price_text() -> String:
+	var parts := []
+	for g in GRADES:
+		parts.append("%s×%s" % [g.g, str(g.m)])
+	return " ".join(parts)
+
+
+## 기분에 따른 미니게임 판정 배율 (1.0 = 보통, 작을수록 판정 구간이 좁다)
+static func mood_skill(mood: float) -> float:
+	if mood >= MOOD_GOOD:
+		return 1.0
+	return 0.85 if mood >= MOOD_BAD else 0.7
+
+
+## 기분에 따른 손님 등장 간격 배율 (클수록 손님이 덜 온다)
+static func mood_spawn(mood: float) -> float:
+	if mood >= MOOD_GOOD:
+		return 1.0
+	return 1.25 if mood >= MOOD_BAD else 1.6
+
+
+static func sale_price(type: String, grade: String) -> int:
+	return int(round(BREADS[type].price * float(grade_info(grade).m) / 100.0)) * 100
 
 
 static func grade_of(q: float) -> Dictionary:

@@ -39,13 +39,16 @@ func _draw() -> void:
 	var loc := "주방" if S.location == "kitchen" else "빵집"
 	if scr != "game":
 		loc = "집"
-	UIUtil.text(self, "%d일차" % int(S.day), Vector2(250, 21), 13, Color(1.0, 0.97, 0.92))
+	UIUtil.text(self, "%d일차" % int(S.day), Vector2(244, 19), 13, Color(1.0, 0.97, 0.92))
+	UIUtil.text(self, "/ %d" % D.LAST_DAY, Vector2(246, 29), 7, Color(1.0, 0.97, 0.92, 0.6))
 	UIUtil.text(self, time, Vector2(290, 22), 17, Color(1.0, 0.84, 0.54))
 	var lw := UIUtil.FONT.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x + 12.0
 	UIUtil.rounded(self, Rect2(344, 9, lw, 15), Color(1, 1, 1, 0.13), Color(0, 0, 0, 0), 5)
 	UIUtil.text(self, label, Vector2(350, 20), 9, Color(1.0, 0.97, 0.92))
-	UIUtil.text(self, "위치: " + loc, Vector2(440, 20), 9, Color(1.0, 0.97, 0.92, 0.8))
-	UIUtil.text(self, D.fmt_money(float(S.money)), Vector2(490, 21), 13, Color(1.0, 0.97, 0.92), HORIZONTAL_ALIGNMENT_RIGHT, 110)
+	UIUtil.text(self, "위치: " + loc, Vector2(440, 15), 9, Color(1.0, 0.97, 0.92, 0.8))
+	if S.flags.get("levain", false):
+		UIUtil.text(self, "르방 보유", Vector2(440, 27), 8, Color(0.85, 0.78, 1.0))
+	UIUtil.text(self, D.fmt_money(float(S.money)), Vector2(490, 21), 13, Color(1.0, 0.97, 0.92) if int(S.money) >= 0 else Color(1.0, 0.45, 0.4), HORIZONTAL_ALIGNMENT_RIGHT, 110)
 
 
 func _bar(name: String, v: float, col: Color, x: float) -> void:

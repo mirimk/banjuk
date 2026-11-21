@@ -1,5 +1,5 @@
 extends Control
-## 타이틀 화면: 새 게임 / 이어하기 / 종료
+## 타이틀 화면: 새 게임 / 이어하기 / 종료  (저장 후 종료는 설정 창에서)
 
 const UIUtil = preload("res://scripts/systems/ui_util.gd")
 const Art = preload("res://scripts/systems/art.gd")
@@ -32,8 +32,8 @@ func _ready() -> void:
 	add_child(hero)
 
 	var box := VBoxContainer.new()
-	box.position = Vector2(250, 206)
-	box.size = Vector2(140, 100)
+	box.position = Vector2(250, 200)
+	box.size = Vector2(140, 120)
 	box.add_theme_constant_override("separation", 6)
 	add_child(box)
 
@@ -50,7 +50,7 @@ func _ready() -> void:
 	quit_btn.pressed.connect(func() -> void: get_tree().quit())
 	box.add_child(quit_btn)
 
-	var hint := UIUtil.label("마우스 클릭 · Space/Enter 결정 · Esc 설정        프로토타입 v0.2 (임시 그래픽)", 9, Color(0.55, 0.45, 0.38))
+	var hint := UIUtil.label("마우스 클릭 · Space/Enter 결정 · Esc 설정        프로토타입 v0.3 · 7일차까지 (임시 그래픽)", 9, Color(0.55, 0.45, 0.38))
 	hint.position = Vector2(0, 336)
 	hint.size = Vector2(640, 16)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -91,7 +91,7 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	draw_rect(Rect2(0, 0, 640, 360), Color(0.16, 0.10, 0.08))
 	UIUtil.ellipse(self, Vector2(320, 150), Vector2(260, 150), Color(0.24, 0.15, 0.10))
-	var types := ["toast", "croissant", "baguette", "bagel", "toast", "croissant"]
+	var types := ["cream", "choco", "sausage", "baguette", "wholewheat", "soboro"]
 	for i in types.size():
 		var y := fmod(380.0 - _t * (14.0 + i * 3.0) + i * 70.0, 420.0) - 30.0
 		Art.bread(self, types[i], Vector2(50 + i * 108, y), 2.0, Color(0, 0, 0, 0), 0.18)

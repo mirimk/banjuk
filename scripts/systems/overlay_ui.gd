@@ -11,6 +11,7 @@ var toast_box: VBoxContainer
 var gear: Button
 var settings: Control
 var confirm_box: Control
+var choice_box: Control
 
 var _btn_save: Button
 var _btn_save_quit: Button
@@ -19,6 +20,10 @@ var _vol_label: Label
 var _btn_mute: Button
 var _confirm_label: Label
 var _confirm_cb := Callable()
+var _choice_label: Label
+var _choice_grid: GridContainer
+var _choice_cb := Callable()
+var _btn_save_exit: Button
 
 
 func _ready() -> void:
@@ -29,10 +34,11 @@ func _ready() -> void:
 	_build_gear()
 	_build_settings()
 	_build_confirm()
+	_build_choice()
 
 
 func modal_open() -> bool:
-	return settings.visible or confirm_box.visible
+	return settings.visible or confirm_box.visible or choice_box.visible
 
 
 # ---------------------------------------------------------------- 페이드
@@ -111,7 +117,8 @@ func toast(msg: String) -> void:
 
 func _build_gear() -> void:
 	gear = Button.new()
-	gear.text = "⚙"
+	gear.text = ""
+	gear.draw.connect(_draw_gear_icon)
 	gear.tooltip_text = "설정 (Esc)"
 	gear.position = Vector2(608, 3)
 	gear.size = Vector2(28, 26)
@@ -125,6 +132,18 @@ func _build_gear() -> void:
 	gear.focus_mode = Control.FOCUS_NONE
 	gear.pressed.connect(toggle_settings)
 	add_child(gear)
+
+
+## 톱니바퀴 아이콘을 도형으로 그린다 (웹에서는 ⚙ 글자가 없는 폰트가 많음)
+func _draw_gear_icon() -> void:
+	var c := gear.size / 2.0
+	var col := Color(0.35, 0.23, 0.12)
+	for i in 8:
+		var a := TAU * i / 8.0
+		var d := Vector2(cos(a), sin(a))
+		gear.draw_line(c + d * 4.0, c + d * 8.0, col, 3.0)
+	gear.draw_circle(c, 6.0, col)
+	gear.draw_circle(c, 2.4, Color(1.0, 0.95, 0.87))
 
 
 func _round_style(bg: Color, border: Color) -> StyleBoxFlat:
@@ -171,9 +190,15 @@ func _build_settings() -> void:
 		Sound.sfx("good"))
 	box.add_child(_btn_save)
 
-	_btn_save_quit = UIUtil.button("저장 후 종료 (타이틀로)", 13)
+	_btn_save_quit = UIUtil.button("저장 후 타이틀로", 13)
 	_btn_save_quit.pressed.connect(_on_save_quit)
 	box.add_child(_btn_save_quit)
+
+	_btn_save_exit = UIUtil.button("저장 후 게임 종료", 13)
+	_btn_save_exit.pressed.connect(func() -> void:
+		close_settings()
+		GameState.save_and_quit())
+	box.add_child(_btn_save_exit)
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
@@ -213,6 +238,7 @@ func _sync_settings() -> void:
 	var ok := GameState.can_save()
 	_btn_save.disabled = not ok
 	_btn_save_quit.disabled = not ok
+	_btn_save_exit.text = "저장 후 게임 종료" if ok else "게임 종료"
 
 
 func toggle_settings() -> void:
@@ -223,7 +249,7 @@ func toggle_settings() -> void:
 
 
 func open_settings() -> void:
-	if confirm_box.visible or GameState.busy:
+	if confirm_box.visible or choice_box.visible or GameState.busy:
 		return
 	_sync_settings()
 	settings.show()
@@ -290,9 +316,65 @@ func _on_confirm_yes() -> void:
 		cb.call()
 
 
+# ---------------------------------------------------------------- 여러 선택지 창
+
+func _build_choice() -> void:
+	var parts := _modal_base()
+	choice_box = parts[0]
+	var panel: PanelContainer = parts[1]
+	var box: VBoxContainer = parts[2]
+	panel.position = Vector2(130, 44)
+	panel.custom_minimum_size = Vector2(380, 0)
+	_choice_label = UIUtil.label("", 12, Color(0.23, 0.16, 0.10))
+	_choice_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_choice_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_choice_label.custom_minimum_size = Vector2(350, 0)
+	box.add_child(_choice_label)
+	_choice_grid = GridContainer.new()
+	_choice_grid.columns = 1
+	_choice_grid.add_theme_constant_override("h_separation", 6)
+	_choice_grid.add_theme_constant_override("v_separation", 5)
+	box.add_child(_choice_grid)
+	var no := UIUtil.button("취소", 12)
+	no.pressed.connect(func() -> void: _close_choice(-1))
+	box.add_child(no)
+
+
+## 선택지 여러 개 중 하나를 고르는 창. on_pick(번호) 를 호출한다. 취소하면 호출하지 않는다.
+## disabled 에 번호를 넣으면 그 버튼은 누를 수 없다.
+func choose(msg: String, options: Array, on_pick: Callable, disabled: Array = []) -> void:
+	_choice_label.text = msg
+	_choice_cb = on_pick
+	for c in _choice_grid.get_children():
+		c.free()
+	_choice_grid.columns = 2 if options.size() > 4 else 1
+	for i in options.size():
+		var b := UIUtil.button(str(options[i]), 11)
+		b.custom_minimum_size = Vector2(172 if options.size() > 4 else 350, 24)
+		b.disabled = disabled.has(i)
+		b.pressed.connect(_close_choice.bind(i))
+		_choice_grid.add_child(b)
+	var panel: Control = choice_box.get_child(0)
+	panel.reset_size()
+	choice_box.show()
+	get_tree().paused = true
+
+
+func _close_choice(i: int) -> void:
+	choice_box.hide()
+	get_tree().paused = false
+	var cb := _choice_cb
+	_choice_cb = Callable()
+	if i >= 0 and cb.is_valid():
+		cb.call(i)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		get_viewport().set_input_as_handled()
 		if confirm_box.visible:
+			return
+		if choice_box.visible:
+			_close_choice(-1)
 			return
 		toggle_settings()
